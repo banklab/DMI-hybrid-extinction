@@ -5,7 +5,7 @@ Readme.txt
 —————————————————————————————————————————————
 
 —Install the GNU Scientific Library. On macOS you could do this via homebrew, by running 
->>brew install gel
+>>brew install gsl
 
 —To generate an executable, compile and run the C++ code, as given below,
 >> g++ -Wall -lgsl -O3 -o fourloci_hs hybrid_speciation_hard_selection.cpp
