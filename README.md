@@ -1,6 +1,6 @@
 # DMI-hybrid-extinction
 ## Simulations
-This repository contains the code for the simulations and the analusis relative of the hard-selection DMI purging project.
+This repository contains the code for the simulations and the analyis relative of the hard-selection DMI purging project.
 
 The simulation program was written in C++ using the GSL library. The source code is provided in the hybrid_speciation_hard_selection.cpp file.
 One can compile the soruce code using the following command:
