@@ -2,11 +2,13 @@
 ## Simulations
 This repository contains the code for the simulations and the analusis relative of the hard-selection DMI purging project.
 
-The simulation program was written in C++ using the GSL library (see the hardselection_readme.txt document for compilation details). The source code is provided in the hybrid_speciation_hard_selection.cpp file.
+The simulation program was written in C++ using the GSL library. The source code is provided in the hybrid_speciation_hard_selection.cpp file.
+One can compile the soruce code using the following command:
+g++ -Wall -lgsl -O3 -o fourloci_hs hybrid_speciation_hard_selection.cpp
 
-An example of a bash script used to run the program and explore the parameter space is provided (run_fourloci_example.sh).
+An example of a bash script used to run the program, and explore the parameter space is provided (run_fourloci_example.sh).
 
-The outcome is written in a folder specify by the user, and the aprameter used are always saved in the output file.
+The outcome is written in a folder specify by the user (the name dont matter), and the parameters used are always saved in the output file.
 
 ## Analysis
 The analysis was conducted using Rstudio and R. The main file (analysis.Rmd) contains the code for the analysis and the output cna be seen in the corresponding html file (analysis.html). R functions used to format the data are provided in their own file (functions.R).
