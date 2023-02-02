@@ -20,4 +20,4 @@ In particular, for efficiency, the output files are read once and their result c
 Below, we present the steps to follow to investigate a specific parameter combinations.
 - The first step is to compile the source code and make the resulting file executable.
 - The second step is to edit the bash script and choose the parameters to investigate.
-- The third step is to run the "add_to_dataframe()" function in R.
+- The third step is to run the "add_dataframe()" function in R. This fuctions compute many relevant metrics over the independent replicates generate by the simulation program, such as the survival probability, the hybrid speciation probability, the mean time of resolution of the genetic conflict(s), the mean minimum population size. This function takes three arguments, the folder name, the dataframe to store the newly computed metrics, and the number of replicates accepted.
