@@ -20,11 +20,17 @@ Loading functions and packages
 ```{r load packages and functions}
 source("functions.R")
 library(ggplot2)
+print(paste(c("ggplot version ", as.character(packageVersion("ggplot2"))),collapse=""))
 library(fields)
+print(paste(c("fields version ", as.character(packageVersion("fields"))),collapse=""))
 library(viridis)
+print(paste(c("viridis version ", as.character(packageVersion("viridis"))),collapse=""))
 library(RColorBrewer)
+print(paste(c("RColorBrewer version ", as.character(packageVersion("RColorBrewer"))),collapse=""))
 library(cowplot)
+print(paste(c("cowplot version ", as.character(packageVersion("cowplot"))),collapse=""))
 library(plyr)
+print(paste(c("plyr version ", as.character(packageVersion("plyr"))),collapse=""))
 ```
 
 
@@ -1098,7 +1104,7 @@ if (FALSE){
   fake_dataset=as.data.frame(rbind(rep(NA,length(names_col)),rep(NA,length(names_col))))
   colnames(fake_dataset)=names_col
 } else{
-  fake_dataset=read.csv("ER_dataset.csv")
+  fake_dataset=read.csv("fake_dataset.csv")
   fake_dataset$arch=as.factor(list_Arch[fake_dataset$arch])
 
 }
@@ -1132,12 +1138,12 @@ for (i in list_folder_f){
 #whole_dataset=whole_dataset[!is.na(whole_dataset$n_rep),]
 if (update){
   write.table(list_folder_f,"know_folder_f.txt")
-  write.csv(fake_dataset,"ER_dataset.csv",row.names = FALSE)
+  write.csv(fake_dataset,"fake_dataset.csv",row.names = FALSE)
 }
 ```
 
 ```{r}
-  fake_dataset=read.csv("ER_dataset.csv")
+  fake_dataset=read.csv("fake_dataset.csv")
   fake_dataset$arch=as.factor(list_Arch[fake_dataset$arch])
   fake_dataset=fake_dataset[-c(1,2),]
   fake_dataset$N_min_alive[is.na(fake_dataset$N_min_alive)]=0
