@@ -6,6 +6,7 @@ list_Arch=c("adj_ABAB","adj_ABBA","cro_AABB","cro_ABBA","nes_ABAB","nes_AABB","s
 list_Arch_legend=c("Adj. ABAB","Adj. ABBA","Cro. AABB","Cro. ABBA","Nes. AABB","Nes. ABAB","Sin. DMI")
 
 arch_label=c(`adj_ABAB`="Adj. ABAB",`adj_ABBA`="Adj. ABBA",`cro_AABB`="Cro. AABB",`cro_ABBA`="Cro. ABBA",`nes_ABAB`="Nes. ABAB",`nes_AABB`="Nes. AABB")
+arch_label_long=c(`adj_ABAB`="Adjacent ABAB",`adj_ABBA`="Adjacent ABBA",`cro_AABB`="Crossed AABB",`cro_ABBA`="Crossed ABBA",`nes_ABAB`="Nested ABAB",`nes_AABB`="Nested AABB")
 
 names_col_detail=c("mean_off", "s1","s2","s3","s4","e12","e13","e14","e23","e24","e34","r12","r23","r34","h12","h13","h14","h23","h24","h34","N","K","f0000","f0001","f0010","f0011","f0100","f0101","f0110","f0111","f1000","f1001","f1010","f1011","f1100","f1101","f1110","f1111","hap","alive","t_dmi1","t_dmi2","N_dmi1","N_dmi2","t_res","N_res")
 

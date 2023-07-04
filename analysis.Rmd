@@ -1,5 +1,5 @@
 ---
-title: "In search of the Goldilocks zone for hybrid speciation II: hard times for hybrid speciation."
+title: "In search of the Goldilocks zone for hybrid speciation II: hard times for hybrid speciation?"
 output:
   html_document:
     df_print: paged
@@ -147,7 +147,6 @@ Reload the data for better consistency
   whole_dataset_extra$arch=as.factor(whole_dataset_extra$arch)
   whole_dataset_extra=whole_dataset_extra[-c(1,2),]
 
-
 ```
 
 
@@ -158,9 +157,10 @@ Relationship between survival, epistasis and initial population size. (Since all
 
 ```{r select data only for unlinked loci for specific initial population size}
 temp_data=whole_dataset[whole_dataset$mean_off==1.01&whole_dataset$r12==0.5&whole_dataset$arch %in% c("adj_ABAB","sin_DMI")&whole_dataset$K==1000000&whole_dataset$N %in% c(100,500,1000,2500,5000,10000,50000,100000)&whole_dataset$s1<0&whole_dataset$e12<0,]
+temp_data$err_surv=sqrt((temp_data$p_alive/temp_data$n_rep)*(1-(temp_data$p_alive/temp_data$n_rep))/temp_data$n_rep)
 ```
 
-```{r figure survival probability for unlinked loci as a function of epistasis, width=8, height=6}
+```{r figure survival probability for unlinked loci as a function of epistasis, fig.height=6, fig.width=8, height=6, width=8}
 #pdf("Figure/P_alive_vs_ep_unlinked.pdf",width=8, height=6)
 temp_name=c(`0`="Recessive",`1`="Codominant")
 names(temp_name)=c("0","1")
@@ -176,10 +176,31 @@ temp_data$extra=plyr::mapvalues(temp_data$Cond, c("0_sin_DMI", "1_sin_DMI" , "0_
 
 #str(temp_data)
 
-ggplot(temp_data,aes(x=-e12,y=p_alive/n_rep,col=as.factor(N)))+geom_point()+scale_x_log10()+ xlab("Strength of epistasis")+ylab("Prob(alive)")+geom_line(size=0.5)+labs(col =  "Initial pop. size")+geom_text(x=-4,y=0.9,aes(label=extra), colour="black")+facet_grid(as.numeric(temp_data$arch!="sin_DMI")~h12,labeller =labeller(.rows=temp_name2,.cols=temp_name),)+theme(legend.position="bottom")+ylim(0,1)+theme(text = element_text(size=14))+theme(panel.spacing.x = unit(1, "lines"))
+ggplot(temp_data,aes(x=-e12,y=p_alive/n_rep,col=as.factor(N)))+geom_point()+scale_x_log10()+ xlab("Strength of epistasis")+ylab("Prob.(Survival)")+geom_line(size=0.5)+labs(col =  "Initial pop. size")+geom_text(x=-4.3,y=0.9,aes(label=extra), colour="black")+facet_grid(as.numeric(temp_data$arch!="sin_DMI")~h12,labeller =labeller(.rows=temp_name2,.cols=temp_name),)+theme(legend.position="bottom")+ylim(0,1)+theme(text = element_text(size=14))+theme(panel.spacing.x = unit(1, "lines"))+
+  coord_cartesian(clip = "off")
 
 #dev.off()
 ```
+
+```{r}
+temp_data=whole_dataset[whole_dataset$mean_off==1.01&whole_dataset$r12==0.5&whole_dataset$arch %in% c("sin_DMI","adj_ABAB")&whole_dataset$K==1000000&whole_dataset$N %in% c(100,500,1000,2500,5000,10000,50000,100000)&whole_dataset$s1<0&whole_dataset$e12<0&whole_dataset$h12==1,]
+temp_data$f1_fitness=(1+temp_data$e12)*(1+temp_data$e34)
+temp_data$arch=as.character(temp_data$arch)
+temp_data$arch[temp_data$arch=="sin_DMI"]="Single DMI"
+temp_data$arch[temp_data$arch=="adj_ABAB"]="Two DMIs"
+# adding extra column
+
+temp_data$Cond=sapply(c(1:length(temp_data[,1])), function(x) paste(temp_data$h12[x], temp_data$arch[x], sep="_"))
+
+temp_data$extra=plyr::mapvalues(temp_data$Cond, c("0_sin_DMI", "1_sin_DMI" , "0_adj_ABAB","1_adj_ABAB"), c("A","B","C","D"))
+
+#str(temp_data)
+#pdf("Figure/one_vs_two_DMI_dame_hybrid_load.pdf",width=8, height=6)
+ggplot(temp_data,aes(x=1-f1_fitness,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+ xlab("Hybrid load of the F1 individuals")+ylab("Prob.(Survival)")+geom_line(size=0.5)+labs(col =  "Number of DMIs")+facet_wrap(temp_data$N,nrow=2)+theme(legend.position="bottom")+ylim(0,1)+xlim(0.01,1)+theme(panel.spacing.x = unit(1, "lines"))
+#dev.off()
+
+```
+
 
 Effect of epistasis on the resolution time of the genetic conflict of a single DMI and two DMIs.
 
@@ -222,7 +243,7 @@ temp_data$Cond=sapply(c(1:length(temp_data[,1])), function(x) paste(temp_data$h1
 temp_data$extra=plyr::mapvalues(temp_data$Cond, c("0_sin_DMI", "1_sin_DMI" , "0_adj_ABAB","1_adj_ABAB"), c("A","B","C","D"))
 
 
-ggplot(temp_data,aes(x=N,y=p_alive/n_rep,col=as.factor(-e12)))+geom_point(size=1)+geom_line()+scale_x_log10()+ xlab("Initial pop. size")+ylab("Prob(alive)")+labs(col =  "Strength of epistasis")+facet_grid(as.numeric(temp_data$arch!="sin_DMI")~h12,labeller =labeller(.rows=temp_name2,.cols=temp_name))+theme(legend.position="bottom")+ylim(0,1)+geom_text(x=2,y=.97,aes(label=extra), colour="black")+theme(text = element_text(size=14))+theme(panel.spacing.x = unit(1, "lines"))
+ggplot(temp_data,aes(x=N,y=p_alive/n_rep,col=as.factor(-e12)))+geom_point(size=1)+geom_line()+scale_x_log10()+ xlab("Initial pop. size")+ylab("Prob.(Survival)")+labs(col =  "Strength of epistasis")+facet_grid(as.numeric(temp_data$arch!="sin_DMI")~h12,labeller =labeller(.rows=temp_name2,.cols=temp_name))+theme(legend.position="bottom")+ylim(0,1)+geom_text(x=2,y=.97,aes(label=extra), colour="black")+theme(text = element_text(size=14))+theme(panel.spacing.x = unit(1, "lines"))
 #dev.off()
 ```
 
@@ -282,17 +303,17 @@ ggplot(temp_data,aes(x=N_min_alive,y=t_both,col=as.factor(e12)))+geom_point()+  
 To better understand the outcome observed above, and why intermediate epistasis values presented the highest risk of extinction, we focused on the deterministic scenario.
 ### For an initial pop size of N=5000
 ```{r load frequencies deterministic case N 5000}
-data0=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep0.txt")
-data1=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.1.txt")
-data2=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.2.txt")
-data3=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.3.txt")
-data4=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.4.txt")
-data5=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.5.txt")
-data6=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.6.txt")
-data7=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.7.txt")
-data8=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.8.txt")
-data9=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.9.txt")
-data99=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.99.txt")
+data0=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep0.txt")
+data1=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.1.txt")
+data2=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.2.txt")
+data3=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.3.txt")
+data4=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.4.txt")
+data5=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.5.txt")
+data6=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.6.txt")
+data7=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.7.txt")
+data8=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.8.txt")
+data9=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.9.txt")
+data99=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N5000/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N5000_ep-0.99.txt")
 ```
 
 Population size evoltuion for different epistasis strengths
@@ -332,17 +353,17 @@ plot(-c(0,0.1,0.2,0.3,0.4,.5,.6,.7,.8,.9,.99),sqrt(c(1,data1$V1[2]/data1$V1[1],d
 
 Same as above but with a reduction by a factor 10 of the initial population size.
 ```{r load frequencies deterministic case N 500}
-data3=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.3.txt")
-data4=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.4.txt")
-data5=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.5.txt")
-data6=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.6.txt")
-data7=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.7.txt")
-data8=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.8.txt")
-data9=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.9.txt")
-data99=read.table("output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.99.txt")
+data3=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.3.txt")
+data4=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.4.txt")
+data5=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.5.txt")
+data6=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.6.txt")
+data7=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.7.txt")
+data8=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.8.txt")
+data9=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.9.txt")
+data99=read.table("deterministic_output/output_sym_cod_r0d5_pi_0d5_adjabab_N500/freq_output_sym_cod_r0d5_pi_0d5_adjabab_N500_ep-0.99.txt")
 ```
 ```{r figure determinisitc frequencies N 500}
-pdf("Figure/Determ_pop_size_N500_unlinked.pdf",height=4.5,width=4)
+#pdf("Figure/Determ_pop_size_N500_unlinked.pdf",height=4.5,width=4)
 plot(data5$V1,type='l',ylim=c(3,500),xlim=c(0,750),col="purple",xlab="Generations",ylab="Pop. size",lwd=2,log="y",cex=2)
 points(seq(1000),data6$V1,type='l',col="blue",lwd=2)
 points(seq(1000),data7$V1,type='l',col="cyan",lwd=2)
@@ -350,7 +371,7 @@ points(seq(1000),data4$V1,type='l',col="darkorchid4",lwd=2)
 points(seq(1000),data3$V1,type='l',col="black",lwd=2)
 legend("bottomright",legend=c(expression(paste(epsilon,"=-0.3")),expression(paste(epsilon,"=-0.4")),expression(paste(epsilon,"=-0.5")),expression(paste(epsilon,"=-0.6")),expression(paste(epsilon,"=-0.7"))),col=c("black","darkorchid4","purple","blue","cyan","orange"),pch=16)
 text(x=-180, y=740, substitute(paste(bold('B'))), xpd=NA)
-dev.off()
+#dev.off()
 ```
 
 
@@ -373,13 +394,13 @@ plot_grid(get_legend(ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(ar
 Relationship between survival probability and minimum population size for all 6 architectures
 ```{r Figure survival probability as a function of the minimum population size, fig.height=6, fig.width=8}
 #pdf("Figure/Min_pop_size_vs_alive_cod.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=r12))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob(alive)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
-ggplot(temp_data,aes(x=t_both,y=p_alive/n_rep,col=r12))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Prob(alive)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
-ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=log10(t_both)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob(alive)")+labs(col =  "(log10) Time of resolution of the 2 DMIs")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
+ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=r12))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob.(Survival)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
+ggplot(temp_data,aes(x=t_both,y=p_alive/n_rep,col=r12))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Prob.(Survival)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
+ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=log10(t_both)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob.(Survival)")+labs(col =  "(log10) Time of resolution of the 2 DMIs")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
 
-ggplot(temp_data,aes(x=N,y=N_min_alive,col=p_alive/n_rep))+geom_point()+geom_jitter(width=0.2)+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Starting population size")+ylab("Minimum population size")+labs(col =  "P(alive)")+scale_x_log10()+scale_y_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom")
-ggplot(temp_data,aes(x=t_both,y=N_min_alive,col=p_alive/n_rep))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Minimum population size")+labs(col =  "P(alive)")+scale_x_log10()+scale_y_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
-ggplot(temp_data,aes(x=t_both,y=p_alive/n_rep,col=log10(N_min_alive)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Prob(alive)")+labs(col =  "Minimum population size")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
+ggplot(temp_data,aes(x=N,y=N_min_alive,col=p_alive/n_rep))+geom_point()+geom_jitter(width=0.2)+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Starting population size")+ylab("Minimum population size")+labs(col =  "Prob.(Survival)")+scale_x_log10()+scale_y_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom")
+ggplot(temp_data,aes(x=t_both,y=N_min_alive,col=p_alive/n_rep))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Minimum population size")+labs(col =  "Prob.(Survival)")+scale_x_log10()+scale_y_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
+ggplot(temp_data,aes(x=t_both,y=p_alive/n_rep,col=log10(N_min_alive)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Time of resolution of the 2 DMIs")+ylab("Prob.(Survival)")+labs(col =  "Minimum population size")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))
 #dev.off()
 ```
 
@@ -387,8 +408,8 @@ ggplot(temp_data,aes(x=t_both,y=p_alive/n_rep,col=log10(N_min_alive)))+geom_poin
 Same as above but with guidelines
 ```{r Same as above but with guidelines, fig.height=6, fig.width=8}
 #pdf("Figure/Min_pop_size_vs_alive_cod_guide.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=log10(t_both)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob(survival)")+labs(col =  "(log10) Time of resolution of the 2 DMIs")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))+ geom_segment(aes(x = 10, y = 0, xend = 1000, yend = 1),size=1,color="black")
-ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=(r12)))+geom_point(size=0.5)+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob(survival)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))+ geom_segment(aes(x = 10, y = 0, xend = 600, yend = 1),size=1,color="black")+ theme(axis.text=element_text(size=10),axis.title =element_text(size=12) )+theme(strip.text.x = element_text(size = 12))+guides(color=FALSE)
+ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=log10(t_both)))+geom_point()+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob.(Survival)")+labs(col =  "(log10) Time of resolution of the 2 DMIs")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))+ geom_segment(aes(x = 10, y = 0, xend = 1000, yend = 1),size=1,color="black")
+ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=(r12)))+geom_point(size=0.5)+  scale_colour_gradient(low = "orange", high = "purple")+xlab("Minimum population size")+ylab("Prob.(Survival)")+labs(col =  "Recombination rate")+scale_x_log10()+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label_long))+ theme(legend.position="bottom",legend.key.size = unit(0.33, "in"))+ geom_segment(aes(x = 10, y = 0, xend = 600, yend = 1),size=1,color="black")+ theme(axis.text=element_text(size=10),axis.title =element_text(size=12) )+theme(strip.text.x = element_text(size = 12))+guides(color=FALSE)
 #dev.off()
 ```
 
@@ -650,18 +671,18 @@ temp_data=whole_dataset_extra[default_regime(whole_dataset_extra)&whole_dataset_
 
 Relationship between hybrid speciation, survival probability and recombination, with higher resolution
 ```{r Figure survival probability and hybrid speciation as a function of recombination for the codominant case with epistasis -0.2 and an intial population size of 5000 extra precision}
-pdf("Figure/cod_case_ep0d2_N5000_10k.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.4,1)+geom_line()#+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()#+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.25) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid sp.|survival)")+xlab("Recombination")+geom_line()#+ guides(col=FALSE)
-dev.off()
+#pdf("Figure/cod_case_ep0d2_N5000_10k.pdf",width=8,height=6)
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob. (Survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.4,1)+geom_line()#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("Prob. (Hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.25) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob. (Hybrid sp.|Survival)")+xlab("Recombination")+geom_line()#+ guides(col=FALSE)
+#dev.off()
 ```
 
 Relationship between minimum population size and hybrid speciation with higher resolution
-```{r Figure on the link between recombination minimum population size and hybrid speciation for the codominant case with epistasis -0.2 and an intial population size of 5000 extra precision}
+```{r Figure link between recombination minimum pop size and hybrid speciation for the codominant case with epistasis -0.2 and an initial population size of 5000 extra precision}
 #pdf("Figure/Nminvsrec_and_hyybvsrec_cod0d2_10k.pdf",widt=8,height=6)
-ggplot(temp_data,aes(x=r12,y=N_min_alive,col=as.factor(arch)))+geom_point()+scale_x_log10(breaks=c(5*10^-4, 10^-2,0.5))+ylab("Min. pop. size")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))
-  ggplot(temp_data,aes(x=N_min_alive,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("P(hybrid speciation)")+xlab("Min. pop. size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label)) + theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))
+ggplot(temp_data,aes(x=r12,y=N_min_alive,col=as.factor(arch)))+geom_point()+scale_x_log10(breaks=c(5*10^-4, 10^-2,0.5))+ylab("Min. pop. size")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))#+ guides(col=FALSE)
+  ggplot(temp_data,aes(x=N_min_alive,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("Prob.(hybrid speciation)")+xlab("Min. pop. size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label)) + theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))#+ guides(col=FALSE)
 #dev.off()
 
 ```
@@ -696,9 +717,9 @@ temp_data=whole_dataset_extra[default_regime(whole_dataset_extra)&whole_dataset_
 
 ```{r Figure hybrid speciation for the codimanat case with epistasis -0.2 and an intial population size of 100}
 #pdf("Figure/cod_case_ep0d2_N100.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(alive)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point(se=F)+scale_x_log10()+  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+geom_line()
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point(se=F)+scale_x_log10()+  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+geom_line()
 #dev.off()
 ```
 
@@ -739,9 +760,9 @@ temp_data=whole_dataset_extra[whole_dataset_extra$mean_off==1.01&(whole_dataset_
 
 ```{r Figure hybrid speciation for the codimanat case with epistasis -0.2 and an intial population size of 100 with extra precision}
 #pdf("Figure/cod_case_ep0d2_N100_10k_nosel.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(alive)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+labs(tag = "B")
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch,name="Linkage\n architecture") +theme(text = element_text(size=14))+geom_line()
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point(se=F)+scale_x_log10()+  scale_colour_manual( values=seq(7), labels = list_Arch,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+geom_line()
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+labs(tag = "B")
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch,name="Linkage\n architecture") +theme(text = element_text(size=14))+geom_line()
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point(se=F)+scale_x_log10()+  scale_colour_manual( values=seq(7), labels = list_Arch,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+geom_line()
 #dev.off()
 ```
 
@@ -753,10 +774,10 @@ temp_data=whole_dataset_extra[whole_dataset_extra$mean_off==1.01&(whole_dataset_
 Comparaison between the case with and without direct selection
 ```{r Figure on the effect of the absence of direct selection on the survival and hybrid spaciation probability with eoistasis -0.2 and an initial population size of 100, fig.height=6, fig.width=8}
 #pdf("Figure/comaprison_no_sel.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(s1)))+geom_point()+scale_x_log10()+ylab("P(alive)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="right")+labs(col =  "Selection")+labs(tags="A")#+ guides(col=FALSE)#+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture")
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(s1)))+geom_point()+scale_x_log10()+ylab("P(hybrid speciation)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
- ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/n_rep,col=as.factor(s1)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("P(hybrid speciation&survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
- ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(s1)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(s1)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="right")+labs(col =  "Selection")+labs(tags="A")#+ guides(col=FALSE)#+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture")
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(s1)))+geom_point()+scale_x_log10()+ylab("Prob.(hybrid speciation)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
+ ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/n_rep,col=as.factor(s1)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation&survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
+ ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(s1)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Selection")
  #dev.off()
 
 ```
@@ -788,10 +809,10 @@ temp_data=whole_dataset_extra[whole_dataset_extra$mean_off==1.01&(whole_dataset_
 
 ```{r Figure survival and hybrid speciation for different values of K with extra precision, fig.height=6, fig.width=8}
 #pdf("Figure/as_a_fucntion_of_K.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(K)))+geom_point()+scale_x_log10()+ylab("P(alive)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")#+ guides(col=FALSE)#+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture")
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(K)))+geom_point()+scale_x_log10()+ylab("P(hybrid speciation)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
- ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/n_rep,col=as.factor(K)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("P(hybrid speciation&survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
- ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(K)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(K)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")#+ guides(col=FALSE)#+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture")
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(K)))+geom_point()+scale_x_log10()+ylab("Prob.(hybrid speciation)")+xlab("Recombination") +theme(text = element_text(size=14))+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
+ ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/n_rep,col=as.factor(K)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation & survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
+ ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(K)))+geom_point(se=F)+scale_x_log10() +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+facet_wrap(~arch,labeller =as_labeller( arch_label))+theme(legend.position="bottom")+labs(col =  "Max pop. size")
 #dev.off()
 ```
 
@@ -838,18 +859,21 @@ ggplot(temp_data,aes(x=N,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(a
  Zoom on the lower values for survival
 ```{r Figure survival probability for the codominant case with epistasis -0.2 recombination rate of 0.1 }
 #pdf("Figure/surv_vs_Nin_cod_ep0d2_r0d1.pdf",width=8,height=6)
-ggplot(temp_data[temp_data$N<=1000,],aes(x=N,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()
+ggplot(temp_data[temp_data$N<=1000,],aes(x=N,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob.(Survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()
 #dev.off()
 ```
 
 With higher resolution
 ```{r select data all 6 architectures for the codominant case with epistasis -0.2 recombination rate of 0.1 with extra precision}
 temp_data=whole_dataset_extra[(whole_dataset_extra$e12==-0.2|whole_dataset_extra$e13==-0.2|whole_dataset_extra$e14==-0.2)&whole_dataset_extra$h12==1&whole_dataset_extra$r12==0.1&whole_dataset_extra$mean_off==1.01&whole_dataset_extra$s1==-0.001&whole_dataset_extra$s2==-0.001&whole_dataset_extra$s3==-0.001&whole_dataset_extra$s4==-0.001&whole_dataset_extra$K==1000000,]
+temp_data$err_hyb=sqrt(((temp_data$p_hybA1+temp_data$p_hybB1)/temp_data$p_alive*(temp_data$p_hybA1+temp_data$p_hybB1)/temp_data$p_alive)/temp_data$p_alive)
 ```
 
 ```{r Figure hybrid speciation for the codominant case as a function of initial population size with extra precision, width=8, height=6}
 #pdf("Figure/hybrid_spec_Nini.pdf",width=8, height=6)
-ggplot(temp_data,aes(x=N,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_line() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Initial size of the hybrid population")+scale_x_log10()+geom_point()
+ggplot(temp_data,aes(x=N,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_line() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob. (Hybrid speciation|Survival)")+xlab("Initial size of the hybrid population")+scale_x_log10()+geom_point()+geom_errorbar(aes(x=N,ymin=(p_alive_hybA1+p_alive_hybB1)/p_alive-err_hyb,ymax=(p_alive_hybA1+p_alive_hybB1)/p_alive+err_hyb))
+
+
 #dev.off()
 ```
 
@@ -981,9 +1005,9 @@ temp_data=whole_dataset[default_regime(whole_dataset)&whole_dataset$mean_off==1.
 Relation between survival, hybrid speciation and recombination for (almost) lethal epistasis 
 ```{r survival vs recombination cod e_-0.99 N_5000}
 #pdf("Figure/cod_case_ep0d99_N5000.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=(p_alive)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("P(survival)")+xlab("Recombination rate")+scale_colour_manual( values=seq(7), labels =list_Arch_legend ,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line() #+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.25) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("Prob.(survival)")+xlab("Recombination rate")+scale_colour_manual( values=seq(7), labels =list_Arch_legend ,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line() #+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.2)+ylab("Prob.(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,0.25) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+ guides(col=FALSE)
 #dev.off()
 ```
 
@@ -1040,14 +1064,15 @@ ggplot(temp_data,aes(x=N_min_alive,y=p_alive/n_rep,col=r12))+geom_point(size=0.5
 
 ```{r}
 temp_data=whole_dataset[default_regime(whole_dataset)&(whole_dataset$e12==-0.2|whole_dataset$e13==-0.2|whole_dataset$e14==-0.2)&whole_dataset$h12==0&whole_dataset$r12==0.1&whole_dataset$mean_off==1.01,]
+temp_data$err_hyb=sqrt(((temp_data$p_hybA1+temp_data$p_hybB1)/temp_data$p_alive*(temp_data$p_hybA1+temp_data$p_hybB1)/temp_data$p_alive)/temp_data$p_alive)
 ```
 
 Relationship between survival, hybrid speciation and initial population size for all 6 architectures
 ```{r}
 #pdf("Figure/rec_case_all_arch_vs_Nini.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=N,y=p_alive/n_rep,col=as.factor(arch)))+geom_point() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()
-ggplot(temp_data,aes(x=N,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+ylab("P(hybrid speciation)")+xlab("Initial hybrid population size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+scale_x_log10()+geom_line()
-ggplot(temp_data,aes(x=N,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()
+ggplot(temp_data,aes(x=N,y=p_alive/n_rep,col=as.factor(arch)))+geom_point() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob.(Survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()
+ggplot(temp_data,aes(x=N,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+ylab("Prob.(hybrid speciation)")+xlab("Initial hybrid population size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+scale_x_log10()+geom_line()
+ggplot(temp_data,aes(x=N,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Initial hybrid population size")+scale_x_log10()+geom_line()+geom_errorbar(aes(x=N,ymin=(p_alive_hybA1+p_alive_hybB1)/p_alive-err_hyb,ymax=(p_alive_hybA1+p_alive_hybB1)/p_alive+err_hyb))
 #dev.off()
 ```
 
@@ -1074,9 +1099,9 @@ temp_data=whole_dataset_extra[default_regime(whole_dataset_extra)&whole_dataset_
 
 ```{r survival probability recessive extra precsision}
 #pdf("Figure/rec_case_ep0d2_N5000_10k.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.85,1)+geom_line()#+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+geom_line()# guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+ geom_line()#guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.85,1)+geom_line()#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("Prob.(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+geom_line()# guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+ geom_line()#guides(col=FALSE)
 #dev.off()
 ```
 
@@ -1084,7 +1109,7 @@ Relationship between recombination, minimum population size and hybrid speciatio
 ```{r Figure min pop size vs min pop size}
 #pdf("Figure/Nminvsrec_and_hyybvsrec_rec0d2_10k.pdf",width=8,height=6)
 ggplot(temp_data,aes(x=r12,y=N_min_alive,col=as.factor(arch)))+geom_point()+scale_x_log10(breaks=c(5*10^-4, 10^-2,0.5))+ylab("Min. pop. size")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label))+ theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))
-  ggplot(temp_data,aes(x=N_min_alive,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10(breaks=c(500,1000, 2000,4000))+ylim(0,0.65)+ylab("P(hybrid speciation)")+xlab("Min. pop. size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label)) + theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))
+  ggplot(temp_data,aes(x=N_min_alive,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10(breaks=c(500,1000, 2000,4000))+ylim(0,0.65)+ylab("Prob.(hybrid speciation)")+xlab("Min. pop. size")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\n architecture") +theme(text = element_text(size=14))+ guides(col=FALSE)+facet_wrap(~as.factor(arch),labeller = as_labeller(arch_label)) + theme(axis.text.x = element_text(angle=45),plot.margin=margin(5.5,15,0,0,"pt"))
 #dev.off()
 
 ```
@@ -1111,9 +1136,46 @@ temp_data$extra2=plyr::mapvalues(temp_data$dom, c("Codominant", "Recessive"), c(
 
 ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(survival)")+xlab("Recombination")+geom_text(x=-4,y=0.75,aes(label=extra),colour="black")+geom_text(x=-4,y=0.99,aes(label=extra),colour="black")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+facet_grid(rows=vars(dom),scales="free")#+theme(legend.position="bottom")#+ guides(col=FALSE)
 
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+facet_grid(rows=vars(dom),scales="free")+geom_text(x=-4,y=0.6,aes(label=extra),colour="black")+geom_text(x=-4,y=0.15,aes(label=extra2),colour="black")#+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid sp.|survival)")+xlab("Recombination")+geom_line()+facet_grid(rows=vars(dom),scales="free")+geom_text(x=-4,y=0.6,aes(label=extra),colour="black")+geom_text(x=-4,y=0.22,aes(label=extra2),colour="black")#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob. (Hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+facet_grid(rows=vars(dom),scales="free")+geom_text(x=-4,y=0.6,aes(label=extra),colour="black")+geom_text(x=-4,y=0.15,aes(label=extra2),colour="black")#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10() +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob. (Hybrid sp.|Survival)")+xlab("Recombination")+geom_line()+facet_grid(rows=vars(dom),scales="free")+geom_text(x=-4,y=0.6,aes(label=extra),colour="black")+geom_text(x=-4,y=0.22,aes(label=extra2),colour="black")#+ guides(col=FALSE)
 #dev.off()
+```
+
+
+
+```{r Figure survival probability and hybrid speciation as a function of recombination for the case with epistasis -0.2 and an intial population size of 5000 extra precision version 2}
+#pdf("Figure/case_ep0d2_N5000_10k_v2.pdf",width=8,height=6)
+temp_data=whole_dataset_extra[default_regime(whole_dataset_extra)&whole_dataset_extra$mean_off==1.01&(whole_dataset_extra$e12==-0.2|whole_dataset_extra$e13==-0.2|whole_dataset_extra$e14==-0.2)&whole_dataset_extra$N==5000&whole_dataset_extra$arch!="sin_DMI",]
+temp_data2=temp_data
+temp_data2$hybrid_spe=(temp_data2$p_hybA1+temp_data2$p_hybB1)/temp_data$n_rep
+temp_data2$conditioned=0
+temp_data3=temp_data
+temp_data3$hybrid_spe=(temp_data3$p_alive_hybA1+temp_data3$p_alive_hybB1)/temp_data3$p_alive
+temp_data3$conditioned=1
+
+temp_data=rbind(temp_data2,temp_data3)
+
+
+
+dom_lab=c(`0`="Recessive",`1`="Codominant")
+names(dom_lab)=c("0","1")
+conditioned_lab=c(`0`="Unconditional probability",`1`="Conditional probability")
+names(conditioned_lab)=c("0","1")
+
+
+temp_data$Cond=sapply(c(1:length(temp_data[,1])), function(x) paste(temp_data$h12[x], temp_data$conditioned[x], sep="_"))
+
+temp_data$extra=plyr::mapvalues(temp_data$Cond, c("0_0", "0_1" , "1_0","1_1"), c("A","B","C","D"))
+temp_data$extra2=plyr::mapvalues(temp_data$Cond, c("0_0", "0_1" , "1_0","1_1"), c("","","C","D"))
+
+
+
+ggplot(temp_data,aes(x=r12,y=hybrid_spe,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob. (Hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+geom_line()+facet_grid(h12~conditioned,labeller =labeller(.rows=dom_lab,.cols=conditioned_lab),scales="free")+theme(legend.position="bottom")+geom_text(x=-4.3,y=0.675,aes(label=extra),colour="black")+geom_text(x=-4.3,y=0.225,aes(label=extra2),colour="black")+theme(text = element_text(size=14))+theme(panel.spacing.x = unit(1, "lines")) +
+  coord_cartesian(clip = "off")
+
+#dev.off()
+
+
 ```
 
 
@@ -1126,9 +1188,9 @@ temp_data=whole_dataset[default_regime(whole_dataset)&whole_dataset$mean_off==1.
 Relationship between survival, hybrid speciation and recombination for all 6 architectures for lethal epistasis
 ```{r survival vs recombination recessive lethal N_5000}
 #pdf("Figure/rec_case_ep0d99_N5000.pdf",width=8,height=6)
-ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("P(survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.85,1)+geom_line()#+ guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("P(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ geom_line()#guides(col=FALSE)
-ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("P(hybrid speciation|survival)")+xlab("Recombination")+geom_line()# guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=p_alive/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylab("Prob.(Survival)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylim(0.85,1)+geom_line()#+ guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_hybA1+p_hybB1)/n_rep,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1)+ylab("Prob.(hybrid speciation)")+xlab("Recombination")+ scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ geom_line()#guides(col=FALSE)
+ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor(arch)))+geom_point()+scale_x_log10()+ylim(0,1) +  scale_colour_manual( values=seq(7), labels = list_Arch_legend,name="Linkage\narchitecture") +theme(text = element_text(size=14))+ylab("Prob.(hybrid speciation|survival)")+xlab("Recombination")+geom_line()# guides(col=FALSE)
 #dev.off()
 ```
 
@@ -1153,13 +1215,13 @@ ggplot(temp_data,aes(x=r12,y=(p_alive_hybA1+p_alive_hybB1)/p_alive,col=as.factor
 
 Here we simulated with the same program an evolutionary rescue scenario, and evaluated the link between minimum population size and survival probability.
 
-## Reading the simulaitons output and writing the dataframe
+## Reading the simulations output and writing the dataframe
 ```{r create placeholder}
 if (FALSE){
   fake_dataset=as.data.frame(rbind(rep(NA,length(names_col)),rep(NA,length(names_col))))
   colnames(fake_dataset)=names_col
 } else{
-  fake_dataset=read.csv("fake_dataset.csv")
+  fake_dataset=read.csv("evol_rescue.csv")
   fake_dataset$arch=as.factor(list_Arch[fake_dataset$arch])
 
 }
@@ -1193,12 +1255,12 @@ for (i in list_folder_f){
 #whole_dataset=whole_dataset[!is.na(whole_dataset$n_rep),]
 if (update){
   write.table(list_folder_f,"know_folder_f.txt")
-  write.csv(fake_dataset,"fake_dataset.csv",row.names = FALSE)
+  write.csv(fake_dataset,"evol_rescue.csv",row.names = FALSE)
 }
 ```
 
 ```{r}
-  fake_dataset=read.csv("fake_dataset.csv")
+  fake_dataset=read.csv("evol_rescue.csv")
   fake_dataset$arch=as.factor(list_Arch[fake_dataset$arch])
   fake_dataset=fake_dataset[-c(1,2),]
   fake_dataset$N_min_alive[is.na(fake_dataset$N_min_alive)]=0
@@ -1209,11 +1271,142 @@ if (update){
 Link between survival (or evolutionary rescue) and minimum population size
 ```{r}
 #pdf("Figure/prob_rescue.pdf",width=8,height=6)
-ggplot(fake_dataset,aes(x=N_min_alive,y=p_alive/n_rep,col=as.factor(f1000/N)))+geom_point()+scale_x_log10(limits=c(1,10^5))+ geom_segment(aes(x = 10, y = 0, xend = 600, yend = 1),size=.5,color="black")+ylab("Prob. rescue")+xlab("Minimum population size")+labs(col="Freq. of\n allele A")+facet_wrap(~as.factor(signif(fake_dataset$s1,3)),nrow=3)
+ggplot(fake_dataset,aes(x=N_min_alive,y=p_alive/n_rep,col=as.factor(f1000/N)))+geom_point()+scale_x_log10(limits=c(1,10^5))+ geom_segment(aes(x = 10, y = 0, xend = 600, yend = 1),size=.5,color="black")+ylab("Prob.(Survival)")+xlab("Minimum population size")+labs(col="Freq. of\n allele A")+facet_wrap(~as.factor(signif(fake_dataset$s1,3)),nrow=3)
 #dev.off()
 ```
 
 Link between strength of selection and minimum population size
 ```{r}
 ggplot(fake_dataset,aes(x=s1,y=N_min_alive,col=as.factor(f1000/N)))+geom_point()+ylab("Min pop size")+xlab("Selection on the ancestral allele")+labs(col="Freq. of allele A")+geom_line()
+```
+
+## Deterministic trajectories
+
+
+```{r}
+if(TRUE){
+case_adjabab=read.table("deterministic_output/freq_sym_adjabab.txt")
+case_adjabba=read.table("deterministic_output/freq_sym_adjabba.txt")
+case_croaabb=read.table("deterministic_output/freq_sym_croaabb.txt")
+case_croabba=read.table("deterministic_output/freq_sym_croabba.txt")
+case_nesabab=read.table("deterministic_output/freq_sym_nesabab.txt")
+case_nesaabb=read.table("deterministic_output/freq_sym_nesaabb.txt")
+} else {
+  case_adjabab=read.table("deterministic_output/freq_asymA_adjabab.txt")
+case_adjabba=read.table("deterministic_output/freq_asymA_adjabba.txt")
+case_croaabb=read.table("deterministic_output/freq_asymA_croaabb.txt")
+case_croabba=read.table("deterministic_output/freq_asymA_croabba.txt")
+case_nesabab=read.table("deterministic_output/freq_asymA_nesabab.txt")
+case_nesaabb=read.table("deterministic_output/freq_asymA_nesaabb.txt")
+}
+```
+
+
+```{r}
+case_adjabab=cbind(case_adjabab,rep("Adj. ABAB",1001))
+case_adjabba=cbind(case_adjabba,rep("Adj. ABBA",1001))
+case_croaabb=cbind(case_croaabb,rep("Cro. AABB",1001))
+case_croabba=cbind(case_croabba,rep("Cro. ABAB",1001))
+case_nesabab=cbind(case_nesabab,rep("Nes. ABAB",1001))
+case_nesaabb=cbind(case_nesaabb,rep("Nes. AABB",1001))
+
+
+```
+
+```{r}
+colnames(case_adjabab)=c("pop_size","freq_A1","freq_B1","freq_A2","freq_B2","freq_anc","freq_ancB2","freq_ancA2","freq_D2","freq_ancB1","freq_parB","freq_hybB1","freq_D2B","freq_ancA1","freq_hybA1","freq_parA","freq_D2A","freq_D1","freq_D1B","freq_D1A","freq_DD")
+colnames(case_croaabb)=c("pop_size","freq_A1","freq_A2","freq_B1","freq_B2","freq_anc","freq_ancB2","freq_ancB1","freq_parB","freq_ancA2","freq_D2","freq_hybB1","freq_D2B","freq_ancA1","freq_hybA1","freq_D1","freq_D1B","freq_parA","freq_D2A","freq_D1A","freq_DD")
+colnames(case_nesabab)=c("pop_size","freq_A1","freq_B2","freq_A2","freq_B1","freq_anc","freq_ancB1","freq_ancA2","freq_hybB1","freq_ancB2","freq_parB","freq_D2","freq_D2B","freq_ancA1","freq_D1","freq_parA","freq_D1A","freq_hybA1","freq_D1B","freq_D2A","freq_DD")
+colnames(case_adjabba)=c("pop_size","freq_A1","freq_B1","freq_B2","freq_A2","freq_anc","freq_ancA2","freq_ancB2","freq_D2","freq_ancB1","freq_hybB1","freq_parB","freq_D2B","freq_ancA1","freq_parA","freq_hybA1","freq_D2A","freq_D1","freq_D1A","freq_D1B","freq_DD")
+```
+
+
+
+```{r}
+plot(-100,xlim=c(0,500),ylim=c(0,500),ylab="Expected population size",xlab="Generations")
+points(seq(0,1000),case_adjabab$V1,col="black",type="l")
+points(seq(0,1000),case_adjabba$V1,col="red",type="l")
+points(seq(0,1000),case_croaabb$V1,col="green",type="l")
+points(seq(0,1000),case_croabba$V1,col="blue",type="l")
+points(seq(0,1000),case_nesabab$V1,col="purple",type="l")
+points(seq(0,1000),case_nesaabb$V1,col="cyan",type="l")
+```
+
+```{r}
+plot(-1,xlim=c(0,50),ylim=c(0,0.7),ylab="Freq. ancestral hap.",xlab="Generations")
+points(seq(0,1000),case_adjabab$V6,col="black",pch=16)
+points(seq(0,1000),case_adjabba$V6,col="red",pch=16)
+points(seq(0,1000),case_croaabb$V6,col="green",pch=16)
+points(seq(0,1000),case_croabba$V6,col="blue",pch=16)
+points(seq(0,1000),case_nesabab$V6,col="purple",pch=16)
+points(seq(0,1000),case_nesaabb$V6,col="cyan",pch=16)
+
+```
+
+```{r}
+plot(NA,xlim=c(0,.7),ylim=c(50,5000),xlab="Freq. ancestral hap.",ylab="Expected population size",log="y")
+points(case_adjabab$V6[1:51],case_adjabab$V1[1:51],col="black",pch=16)
+points(case_adjabba$V6[1:51],case_adjabba$V1[1:51],col="red",pch=16)
+points(case_croaabb$V6[1:51],case_croaabb$V1[1:51],col="green",pch=16)
+points(case_croabba$V6[1:51],case_croabba$V1[1:51],col="blue",pch=16)
+points(case_nesabab$V6[1:51],case_nesabab$V1[1:51],col="purple",pch=16)
+points(case_nesaabb$V6[1:51],case_nesaabb$V1[1:51],col="cyan",pch=16)
+```
+
+Below we are representing the frequencies of haplotypes or group of haplotypes using the following color scheme, black for ancestral (a1b1a2b2), blue (a1B1a2B2) and red (A1b1A2b2) for the parental haplotypes, pink (A1b1a2b2 or a1b1A2b2) and cyan (a1B1a2b2 or a1b1a2B2), green (a1B1A2b2) and yellow (A1b1a2B2) for the hybrid speciation haplotypes and purple for any haplotype harboring at least one DMI.
+
+```{r}
+temp_case=case_adjabab
+time_step=50
+plot(-100,xlim=c(0,time_step),ylim=c(0,1),ylab="Freq.(hap).",xlab="Generations",cex.lab=1.5,cex.axis=1.5, main ="Adjacent ABAB")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(rep(0,(time_step+1)),temp_case$freq_anc[seq((time_step+1),1,-1)]),col="black")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(temp_case$freq_anc[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA)[seq((time_step+1),1,-1)]),col="red")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[seq((time_step+1),1,-1)]),col="blue")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[seq((time_step+1),1,-1)]),col="pink")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[seq((time_step+1),1,-1)]),col="cyan")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[seq((time_step+1),1,-1)]),col="yellow")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[seq((time_step+1),1,-1)]),col="green")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[1:(time_step+1)],(rep(1,time_step+1))[seq((time_step+1),1,-1)]),col="purple")
+```
+
+```{r}
+temp_case=case_croaabb
+time_step=50
+plot(-100,xlim=c(0,time_step),ylim=c(0,1),ylab="Freq.(hap).",xlab="Generations",cex.lab=1.5,cex.axis=1.5,main="Crossed AABB")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(rep(0,(time_step+1)),temp_case$freq_anc[seq((time_step+1),1,-1)]),col="black")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(temp_case$freq_anc[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA)[seq((time_step+1),1,-1)]),col="red")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[seq((time_step+1),1,-1)]),col="blue")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[seq((time_step+1),1,-1)]),col="pink")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[seq((time_step+1),1,-1)]),col="cyan")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[seq((time_step+1),1,-1)]),col="yellow")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[seq((time_step+1),1,-1)]),col="green")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[1:(time_step+1)],(rep(1,time_step+1))[seq((time_step+1),1,-1)]),col="purple")
+```
+
+```{r}
+temp_case=case_nesabab
+time_step=50
+plot(-100,xlim=c(0,time_step),ylim=c(0,1),ylab="Freq.(hap).",xlab="Generations",cex.lab=1.5,cex.axis=1.5,main="Nested ABAB")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(rep(0,(time_step+1)),temp_case$freq_anc[seq((time_step+1),1,-1)]),col="black")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(temp_case$freq_anc[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA)[seq((time_step+1),1,-1)]),col="red")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[seq((time_step+1),1,-1)]),col="blue")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[seq((time_step+1),1,-1)]),col="pink")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[seq((time_step+1),1,-1)]),col="cyan")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[seq((time_step+1),1,-1)]),col="yellow")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[seq((time_step+1),1,-1)]),col="green")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[1:(time_step+1)],(rep(1,time_step+1))[seq((time_step+1),1,-1)]),col="purple")
+```
+
+```{r}
+temp_case=case_adjabba
+time_step=50
+plot(-100,xlim=c(0,time_step),ylim=c(0,1),ylab="Freq.(hap).",xlab="Generations",cex.lab=1.5,cex.axis=1.5,main="Adjacent ABBA")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(rep(0,(time_step+1)),temp_case$freq_anc[seq((time_step+1),1,-1)]),col="black")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c(temp_case$freq_anc[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA)[seq((time_step+1),1,-1)]),col="red")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[seq((time_step+1),1,-1)]),col="blue")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[seq((time_step+1),1,-1)]),col="pink")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[seq((time_step+1),1,-1)]),col="cyan")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[seq((time_step+1),1,-1)]),col="yellow")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1)[1:(time_step+1)],(temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[seq((time_step+1),1,-1)]),col="green")
+polygon(c(seq(0,time_step),seq(time_step,0,-1)),c((temp_case$freq_anc+temp_case$freq_parA+temp_case$freq_parB+temp_case$freq_ancA1+temp_case$freq_ancA2+temp_case$freq_ancB1+temp_case$freq_ancB2+temp_case$freq_hybA1+temp_case$freq_hybB1)[1:(time_step+1)],(rep(1,time_step+1))[seq((time_step+1),1,-1)]),col="purple")
 ```
